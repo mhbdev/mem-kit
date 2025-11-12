@@ -21,13 +21,18 @@
 ## 📦 Installation
 
 ```bash
-npm install MemKit
+npm install @mhbdev/mem-kit
 ```
 
 Or with yarn:
 ```bash
-yarn add MemKit
+yarn add @mhbdev/mem-kit
 ```
+
+Requirements:
+- Node `>=18` (uses global `fetch`)
+- For generation/embeddings, set `OPENAI_API_KEY`.
+- SQLite adapter is optional and uses a native dependency (`better-sqlite3`). If you don’t need SQLite, you can skip installing native modules; the package marks it as optional.
 
 ---
 
@@ -38,7 +43,7 @@ import {
   MemoryManager, 
   InMemoryStorageAdapter,
   KeywordRetrievalStrategy 
-} from "MemKit";
+} from "@mhbdev/mem-kit";
 
 // Initialize memory system
 const memory = new MemoryManager({
@@ -210,7 +215,7 @@ const recentSummary = await memory.summarize({ limit: 10 });
 Perfect for development, testing, or ephemeral sessions.
 
 ```typescript
-import { InMemoryStorageAdapter } from "MemKit";
+import { InMemoryStorageAdapter } from "@mhbdev/mem-kit";
 
 const storage = new InMemoryStorageAdapter();
 ```
@@ -219,7 +224,7 @@ const storage = new InMemoryStorageAdapter();
 Production-ready persistent storage.
 
 ```typescript
-import { SQLiteStorageAdapter } from "MemKit";
+import { SQLiteStorageAdapter } from "@mhbdev/mem-kit";
 
 // In-memory database
 const storage = new SQLiteStorageAdapter(":memory:");
@@ -234,7 +239,7 @@ const storage = new SQLiteStorageAdapter("./memories.db");
 Real semantic search with OpenAI embeddings.
 
 ```typescript
-import { OpenAIEmbeddingAdapter } from "MemKit";
+import { OpenAIEmbeddingAdapter } from "@mhbdev/mem-kit";
 
 const embedder = new OpenAIEmbeddingAdapter({
   apiKey: process.env.OPENAI_API_KEY,
@@ -246,7 +251,7 @@ const embedder = new OpenAIEmbeddingAdapter({
 Deterministic embeddings for testing.
 
 ```typescript
-import { MockEmbeddingAdapter } from "MemKit";
+import { MockEmbeddingAdapter } from "@mhbdev/mem-kit";
 
 const embedder = new MockEmbeddingAdapter(1536); // Dimension
 ```
@@ -257,7 +262,7 @@ const embedder = new MockEmbeddingAdapter(1536); // Dimension
 Text generation and summarization.
 
 ```typescript
-import { OpenAIAdapter } from "MemKit";
+import { OpenAIAdapter } from "@mhbdev/mem-kit";
 
 const llm = new OpenAIAdapter({
   apiKey: process.env.OPENAI_API_KEY,
@@ -271,7 +276,7 @@ const llm = new OpenAIAdapter({
 Fast, simple keyword matching.
 
 ```typescript
-import { KeywordRetrievalStrategy } from "MemKit";
+import { KeywordRetrievalStrategy } from "@mhbdev/mem-kit";
 
 const retrieval = new KeywordRetrievalStrategy();
 ```
@@ -280,7 +285,7 @@ const retrieval = new KeywordRetrievalStrategy();
 Semantic similarity search using embeddings.
 
 ```typescript
-import { EmbeddingRetrievalStrategy } from "MemKit";
+import { EmbeddingRetrievalStrategy } from "@mhbdev/mem-kit";
 
 const retrieval = new EmbeddingRetrievalStrategy(embedder);
 ```
@@ -299,7 +304,7 @@ import {
   OpenAIAdapter,
   EmbeddingRetrievalStrategy,
   ConsoleLogger
-} from "MemKit";
+} from "@mhbdev/mem-kit";
 
 const embedder = new OpenAIEmbeddingAdapter({
   apiKey: process.env.OPENAI_API_KEY

@@ -8,6 +8,7 @@ import {ILogger} from "../domain/ports/ILogger";
 import {MemoryConfig} from "./config/MemoryConfig";
 import {SimpleTimeProvider} from "../infra/utilities/SimpleTimeProvider";
 import {ConsoleLogger} from "../infra/utilities/ConsoleLogger";
+import {MemoryItem, MemoryItemInput, MemoryType} from "../domain/models/MemoryItem";
 
 export class MemoryManager {
     private storage: IStorageAdapter;

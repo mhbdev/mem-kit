@@ -233,6 +233,34 @@ const storage = new SQLiteStorageAdapter(":memory:");
 const storage = new SQLiteStorageAdapter("./memories.db");
 ```
 
+#### PostgresStorageAdapter (pgvector + drizzle)
+Production-grade Postgres storage using the `pgvector` extension for embeddings.
+
+Requirements:
+- PostgreSQL with `pgvector` installed: `CREATE EXTENSION IF NOT EXISTS vector;`
+- Install optional dependencies:
+  - `npm install pg drizzle-orm`
+
+```typescript
+import { PostgresStorageAdapter, MemoryManager, EmbeddingRetrievalStrategy, OpenAIEmbeddingAdapter } from "@mhbdev/mem-kit";
+
+const storage = new PostgresStorageAdapter({
+  connectionString: process.env.DATABASE_URL!,
+  embeddingDimensions: 1536 // match your embedding model
+});
+
+const embedder = new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY });
+
+const memory = new MemoryManager({
+  storage,
+  embedder,
+  retrieval: new EmbeddingRetrievalStrategy(embedder)
+});
+
+await memory.remember({ type: "fact", content: "User enjoys hiking" });
+const results = await memory.recall("outdoor activities");
+```
+
 ### Embedding Adapters
 
 #### OpenAIEmbeddingAdapter
@@ -288,6 +316,34 @@ Semantic similarity search using embeddings.
 import { EmbeddingRetrievalStrategy } from "@mhbdev/mem-kit";
 
 const retrieval = new EmbeddingRetrievalStrategy(embedder);
+```
+
+#### PgVectorRetrievalStrategy (server-side similarity)
+Use Postgres `pgvector` to perform similarity search directly in the database for efficient large-scale retrieval.
+
+Requirements:
+- PostgreSQL with `pgvector` installed
+- Optional deps installed: `pg`, `drizzle-orm`
+
+```typescript
+import { PgVectorRetrievalStrategy, PostgresStorageAdapter, MemoryManager, OpenAIEmbeddingAdapter } from "@mhbdev/mem-kit";
+import { Pool } from "pg";
+
+const storage = new PostgresStorageAdapter({
+  connectionString: process.env.DATABASE_URL!,
+  embeddingDimensions: 1536
+});
+
+const embedder = new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+
+const memory = new MemoryManager({
+  storage,
+  embedder,
+  retrieval: new PgVectorRetrievalStrategy({ pool, embedder }),
+});
+
+const results = await memory.recall("recommend outdoor activities", 10);
 ```
 
 ---
@@ -489,7 +545,6 @@ MemKit includes comprehensive tests for:
 
 ## 🗺️ Roadmap
 
-- [ ] PostgreSQL adapter with pgvector
 - [ ] Pinecone/Weaviate vector DB adapters
 - [ ] Conversation threading/context management
 - [ ] Memory importance scoring

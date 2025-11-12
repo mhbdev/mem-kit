@@ -11,10 +11,12 @@ export * from "./application/config/MemoryConfig";
 
 export * from "./infra/storage/InMemoryStorageAdapter";
 export * from "./infra/storage/SQLiteStorageAdapter";
+export * from "./infra/storage/PostgresStorageAdapter";
 export * from "./infra/embedding/OpenAIEmbeddingAdapter";
 export * from "./infra/llm/OpenAIAdapter";
 export * from "./infra/retrieval/KeywordRetrievalStrategy";
 export * from "./infra/retrieval/EmbeddingRetrievalStrategy";
+export * from "./infra/retrieval/PgVectorRetrievalStrategy";
 export * from "./infra/utilities/SimpleTimeProvider";
 export * from "./infra/utilities/ConsoleLogger";
 export * from "./infra/advanced/AdvancedMemoryManager";

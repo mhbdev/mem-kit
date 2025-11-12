@@ -1,5 +1,5 @@
 {
-  "name": "mem-kit",
+  "name": "@mhbdev/mem-kit",
   "version": "0.1.0",
   "description": "Minimal, Pluggable LLM Memory SDK",
   "type": "module",

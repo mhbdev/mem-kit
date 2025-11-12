@@ -61,7 +61,7 @@ export class AdaptiveLearningSystem {
         return recommendations;
     }
 
-    async autoOptimize(memoryManager: AdvancedMemoryManager): Promise<void> {
+    async autoOptimize(_memoryManager: AdvancedMemoryManager): Promise<void> {
         const recommendations = this.getOptimizationRecommendations();
 
         for (const rec of recommendations) {

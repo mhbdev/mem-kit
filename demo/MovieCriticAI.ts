@@ -1,7 +1,7 @@
 // Problem: Can't remember which movies you've seen or liked
 // Solution: AI that tracks your taste and suggests perfect matches
 
-import {MemoryItem, SQLiteStorageAdapter} from "../src";
+import {MemoryItem, SQLiteStorageAdapter, OpenAIAdapter, OpenAIEmbeddingAdapter} from "../src";
 import {AdvancedMemoryManager} from "../src/infra/advanced/AdvancedMemoryManager";
 
 class MovieMemory {
@@ -10,6 +10,8 @@ class MovieMemory {
     constructor() {
         this.memory = new AdvancedMemoryManager({
             storage: new SQLiteStorageAdapter('./movies.db'),
+            embedder: new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            llm: new OpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
             enableGraph: true,
             enableMemoryReasoning: true,
             enableHierarchy: true
@@ -39,7 +41,7 @@ class MovieMemory {
         const allMovies = await this.memory.recall('', 1000);
         const highRated = allMovies.filter(m => (m.metadata?.rating || 0) >= 4);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       User wants a movie for: ${mood}
       ${companions ? `Watching with: ${companions.join(', ')}` : 'Watching alone'}
       

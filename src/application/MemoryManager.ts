@@ -11,13 +11,13 @@ import {ConsoleLogger} from "../infra/utilities/ConsoleLogger";
 import {MemoryItem, MemoryItemInput, MemoryType} from "../domain/models/MemoryItem";
 
 export class MemoryManager {
-    private storage: IStorageAdapter;
+    protected storage: IStorageAdapter;
     private embedder?: IEmbeddingAdapter;
     private llm?: ILLMAdapter;
     private retrieval?: IRetrievalStrategy;
     private timeProvider: ITimeProvider;
     private logger: ILogger;
-    private options: Required<MemoryConfig["options"]>;
+    private options: Required<NonNullable<MemoryConfig["options"]>>;
 
     constructor(config: MemoryConfig) {
         this.storage = config.storage;
@@ -91,6 +91,11 @@ export class MemoryManager {
                 items,
                 limit || this.options.defaultRetrievalLimit
             );
+            if (retrieved.length === 0) {
+                const fallback = items.slice(0, limit || this.options.defaultRetrievalLimit);
+                this.logger.info("Memories recalled via fallback (no strategy matches)", { count: fallback.length });
+                return fallback;
+            }
             this.logger.info("Memories recalled via strategy", { count: retrieved.length });
             return retrieved;
         }
@@ -135,6 +140,16 @@ export class MemoryManager {
         this.logger.info("Summary generated", { itemCount: items.length });
 
         return summary;
+    }
+
+    /**
+     * Generate arbitrary text using the configured LLM
+     */
+    async generate(prompt: string): Promise<string> {
+        if (!this.llm) {
+            throw new Error("LLM adapter required for generation");
+        }
+        return this.llm.generate(prompt);
     }
 
     /**

@@ -56,8 +56,16 @@ export class MultiModalMemoryAdapter {
     }
 
     private async generateEmbedding(text: string): Promise<number[]> {
-        // Implement embedding generation
-        return [];
+        // Simple deterministic embedding from text: char-code hashing
+        const vecSize = 16;
+        const vec = new Array<number>(vecSize).fill(0);
+        for (let i = 0; i < text.length; i++) {
+            const code = text.charCodeAt(i);
+            vec[i % vecSize] += code;
+        }
+        // Normalize
+        const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0)) || 1;
+        return vec.map(v => v / norm);
     }
 }
 

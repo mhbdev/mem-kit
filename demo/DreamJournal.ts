@@ -33,7 +33,8 @@ class DreamJournal {
         const allDreams = await this.memory.recall('dream', 100);
 
         // Use memory reasoning to find patterns
-        const patterns = await this.memory.reasoningEngine.detectPatterns(allDreams);
+        const patternText = await this.memory.generate(`List 5 recurring patterns/themes from these entries as comma-separated phrases:\n${allDreams.map(d => '- ' + d.content).join('\n')}`);
+        const patterns = patternText.split(/[\,\n]/).map(s => s.trim()).filter(Boolean);
 
         return {
             recurringSymbols: await this.extractSymbols(allDreams),
@@ -53,7 +54,7 @@ class DreamJournal {
         const symbols = new Map<string, number>();
 
         for (const dream of dreams) {
-            const response = await this.memory.llm.generate(`
+            const response = await this.memory.generate(`
         Extract symbolic elements from this dream:
         ${dream.content}
         

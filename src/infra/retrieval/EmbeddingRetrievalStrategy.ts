@@ -12,14 +12,18 @@ export class EmbeddingRetrievalStrategy implements IRetrievalStrategy {
     ): Promise<MemoryItem[]> {
         // Generate query embedding
         const queryEmbedding = await this.embedder.embed(query);
+        const keywords = this.extractKeywords(query);
 
         // Filter items with embeddings and calculate similarities
         const scored = items
             .filter((item) => item.embedding)
-            .map((item) => ({
-                item,
-                score: this.cosineSimilarity(queryEmbedding, item.embedding!),
-            }));
+            .map((item) => {
+                const base = this.cosineSimilarity(queryEmbedding, item.embedding!);
+                const itemText = `${item.content} ${JSON.stringify(item.metadata || {})}`.toLowerCase();
+                const matches = keywords.filter((kw) => itemText.includes(kw)).length;
+                const boost = matches > 0 ? 0.5 * matches : 0;
+                return { item, score: base + boost };
+            });
 
         // Sort by similarity and return top results
         return scored
@@ -40,5 +44,12 @@ export class EmbeddingRetrievalStrategy implements IRetrievalStrategy {
         }
 
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    private extractKeywords(text: string): string[] {
+        return text
+            .toLowerCase()
+            .split(/\W+/)
+            .filter((word) => word.length > 2);
     }
 }

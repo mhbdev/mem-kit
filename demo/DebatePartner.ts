@@ -2,17 +2,17 @@
 // Solution: AI opponent that references your past positions and evolves
 
 import {AdvancedMemoryManager} from "../src/infra/advanced/AdvancedMemoryManager";
-import {ContradictionDetector} from "../src/infra/advanced/ContradictionDetector";
-import {InMemoryStorageAdapter} from "../src";
+import {InMemoryStorageAdapter, OpenAIAdapter, OpenAIEmbeddingAdapter} from "../src";
 
 class DebatePartner {
     private memory: AdvancedMemoryManager;
-    private contradictionDetector: ContradictionDetector;
+    
 
     constructor(topic: string) {
         this.memory = new AdvancedMemoryManager({
             storage: new InMemoryStorageAdapter(),
-            enableContradictionDetection: true,
+            embedder: new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            llm: new OpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
             enableMemoryReasoning: true,
             enableGraph: true
         });
@@ -31,11 +31,12 @@ class DebatePartner {
         });
 
         // Check for contradictions with your past arguments
-        const contradictions = await this.contradictionDetector.detect(argument);
-
-        if (contradictions.length > 0) {
+        // Check for potential inconsistencies via related past arguments
+        const past = await this.memory.recall('User argues:', 50);
+        const possibleContradiction = past.find(p => p.content.includes('not') !== argument.includes('not'));
+        if (possibleContradiction) {
             return {
-                response: `Wait, you previously argued: "${contradictions[0].content}". How do you reconcile this?`,
+                response: `Earlier you said: "${possibleContradiction.content}". How does that fit with your current claim?`,
                 type: 'challenge'
             };
         }
@@ -44,7 +45,7 @@ class DebatePartner {
         const relatedArguments = await this.memory.recallWithGraph(argument, 2);
 
         // Generate counter-argument using your debate history
-        const counter = await this.memory.llm.generate(`
+        const counter = await this.memory.generate(`
       User argues: ${argument}
       
       Their previous positions: ${relatedArguments.map(m => m.content).join('; ')}
@@ -61,7 +62,7 @@ class DebatePartner {
     async getDebateSummary() {
         const allArguments = await this.memory.recall('argues', 100);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       Analyze this debate history and identify:
       1. User's core beliefs
       2. Weak points in their argumentation

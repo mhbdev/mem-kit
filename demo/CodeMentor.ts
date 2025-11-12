@@ -1,7 +1,7 @@
 // Problem: Coding tutorials don't adapt to what you already know
 // Solution: AI tutor that remembers your skill level and progress
 
-import {MemoryItem, SQLiteStorageAdapter} from "../src";
+import {MemoryItem, SQLiteStorageAdapter, OpenAIAdapter, OpenAIEmbeddingAdapter} from "../src";
 import {AdvancedMemoryManager} from "../src/infra/advanced/AdvancedMemoryManager";
 
 class CodeMentor {
@@ -10,9 +10,9 @@ class CodeMentor {
     constructor(studentId: string) {
         this.memory = new AdvancedMemoryManager({
             storage: new SQLiteStorageAdapter(`./student_${studentId}.db`),
-            enableGraph: true,
-            enableMemoryReasoning: true,
-            enableAdaptiveLearning: true
+            embedder: new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            llm: new OpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            enableGraph: true
         });
     }
 
@@ -33,11 +33,9 @@ class CodeMentor {
         // Find what they know and what they're struggling with
         const understood = await this.memory.recall('understood: true', 100);
         const struggling = await this.memory.recall('understood: false', 100);
+        const gaps = struggling.map(m => m.metadata?.topic || m.content);
 
-        // Find knowledge gaps using reasoning
-        const gaps = await this.memory.reasoningEngine.findGaps(understood);
-
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       Student knows: ${understood.map(m => m.content).join(', ')}
       Student struggles with: ${struggling.map(m => m.content).join(', ')}
       Knowledge gaps: ${gaps.join(', ')}
@@ -54,7 +52,7 @@ class CodeMentor {
         // Tailor explanation to their knowledge level
         const relatedKnowledge = await this.memory.recallWithGraph(concept, 2);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       Explain ${concept} to a student who knows:
       ${relatedKnowledge.map(m => m.content).join('\n')}
       
@@ -64,13 +62,13 @@ class CodeMentor {
     }
 
     async getLearningProgress() {
-        const analytics = await this.memory.getAnalytics();
+        const all = await this.memory.recall('', 1000);
         const understood = await this.memory.recall('understood: true', 1000);
 
         return {
-            totalConcepts: analytics.totalMemories,
+            totalConcepts: all.length,
             mastered: understood.length,
-            masteryRate: understood.length / analytics.totalMemories,
+            masteryRate: all.length ? understood.length / all.length : 0,
             recentProgress: this.getRecentProgress(understood)
         };
     }

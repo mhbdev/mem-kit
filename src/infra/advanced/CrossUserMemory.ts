@@ -30,18 +30,18 @@ export class MemoryTransfer {
 
     async importMemories(
         data: string,
-        mergStrategy: 'append' | 'merge' | 'replace',
+        mergeStrategy: 'append' | 'merge' | 'replace',
         storage: IStorageAdapter
     ): Promise<number> {
         const imported: MemoryItem[] = JSON.parse(data);
 
-        if (mergStrategy === 'replace') {
+        if (mergeStrategy === 'replace') {
             await storage.clear();
         }
 
         let count = 0;
         for (const memory of imported) {
-            if (mergStrategy === 'merge') {
+            if (mergeStrategy === 'merge') {
                 // Check for duplicates
                 const existing = await storage.get(memory.id);
                 if (existing) continue;

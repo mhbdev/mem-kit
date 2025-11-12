@@ -28,32 +28,24 @@ class MemoryTimeline {
     }
 
     async getLifeInsights() {
-        const analytics = await this.memory.getAnalytics();
-        const emotionalTimeline = await this.memory.getEmotionalTimeline();
-
-        // Generate AI insights
-        const insights = await this.memory.llm.generate(`
-      Based on these life events and emotional patterns:
-      
-      Events: ${analytics.totalMemories}
-      Emotional trend: ${emotionalTimeline[emotionalTimeline.length - 1]?.avgValence}
-      
+        const recent = await this.memory.recall('', 100);
+        const insights = await this.memory.generate(`
+      Based on these recent life events (count=${recent.length}):
+      ${recent.slice(0, 10).map(m => `- ${m.content}`).join('\n')}
       Generate 3 meaningful life insights in 2-3 sentences each.
     `);
 
-        return { analytics, emotionalTimeline, insights };
+        return { recentCount: recent.length, insights };
     }
 
     async generateYearInReview(year: number) {
-        const yearMemories = await this.memory.recallByTimeRange(
-            `${year}-01-01`,
-            `${year}-12-31`
-        );
-
-        return this.memory.summarize({
-            memories: yearMemories,
-            style: 'narrative' // Tell it as a story
+        const all = await this.memory.recall('', 1000);
+        const yearMemories = all.filter(m => {
+            const d = new Date(m.createdAt);
+            return d.getFullYear() === year;
         });
+        const memoriesText = yearMemories.map(m => `- ${m.content} (${m.createdAt})`).join('\n');
+        return this.memory.generate(`Create a "Year in Review" narrative for ${year} based on:\n${memoriesText}`);
     }
 }
 

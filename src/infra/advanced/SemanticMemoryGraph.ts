@@ -13,7 +13,6 @@ export interface MemoryRelation {
 
 export class MemoryGraph {
     private relations: MemoryRelation[] = [];
-
     constructor(private embedder: IEmbeddingAdapter) {}
 
     async addMemory(memory: MemoryItem, existing: MemoryItem[]): Promise<void> {
@@ -30,10 +29,11 @@ export class MemoryGraph {
         mem1: MemoryItem,
         mem2: MemoryItem
     ): Promise<MemoryRelation | null> {
-        // Use embeddings to detect semantic similarity
-        if (!mem1.embedding || !mem2.embedding) return null;
-
-        const similarity = this.cosineSimilarity(mem1.embedding, mem2.embedding);
+        // Ensure embeddings are present; compute if missing
+        const emb1 = mem1.embedding ?? (await this.embedder.embed(mem1.content));
+        const emb2 = mem2.embedding ?? (await this.embedder.embed(mem2.content));
+        
+        const similarity = this.cosineSimilarity(emb1, emb2);
 
         if (similarity > 0.85) {
             // High similarity - likely elaboration or related

@@ -2,7 +2,7 @@
 // Solution: AI that adapts workouts to your preferences and progress
 
 import {AdvancedMemoryManager} from "../src/infra/advanced/AdvancedMemoryManager";
-import {SQLiteStorageAdapter} from "../src";
+import {SQLiteStorageAdapter, OpenAIAdapter, OpenAIEmbeddingAdapter, MemoryItem} from "../src";
 
 class WorkoutMemory {
     private memory: AdvancedMemoryManager;
@@ -10,9 +10,9 @@ class WorkoutMemory {
     constructor() {
         this.memory = new AdvancedMemoryManager({
             storage: new SQLiteStorageAdapter('./workouts.db'),
-            enableAdaptiveLearning: true,
-            enableGraph: true,
-            enableAnalytics: true
+            embedder: new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            llm: new OpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            enableGraph: true
         });
     }
 
@@ -41,7 +41,7 @@ class WorkoutMemory {
         const avoidExercises = badWorkouts
             .flatMap(w => w.metadata?.exercises || []);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       Plan a ${availableTime} minute workout with: ${equipment.join(', ')}
       
       User enjoys: ${enjoyedExercises.join(', ')}

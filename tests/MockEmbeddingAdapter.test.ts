@@ -1,4 +1,4 @@
-import {MockEmbeddingAdapter} from "../src";
+import { MockEmbeddingAdapter } from "../src/infra/embedding/MockEmbeddingAdapter";
 
 describe('MockEmbeddingAdapter', () => {
     let adapter: MockEmbeddingAdapter;

@@ -9,16 +9,18 @@ import {VersionedMemory} from "./MemoryVersioning";
 import {ConsolidationStrategy, TemporalConsolidation} from "./Consolication";
 import {MemoryConfig} from "../../application/config/MemoryConfig";
 import {MemoryItem, MemoryItemInput} from "../../domain/models/MemoryItem";
+import {ReasoningEngine} from "./ReasoningEngine";
 
 export class AdvancedMemoryManager extends MemoryManager {
-    private graph: MemoryGraph;
-    private dualSystem: DualMemorySystem;
-    private workingMemory: WorkingMemory;
-    private importanceScorer: ImportanceScorer;
-    private contradictionDetector: ContradictionDetector;
-    private hierarchyOrganizer: HierarchicalMemoryOrganizer;
-    private versionControl: VersionedMemory;
-    private consolidation: ConsolidationStrategy;
+    private graph?: MemoryGraph;
+    private dualSystem?: DualMemorySystem;
+    private workingMemory?: WorkingMemory;
+    private importanceScorer?: ImportanceScorer;
+    private contradictionDetector?: ContradictionDetector;
+    private hierarchyOrganizer?: HierarchicalMemoryOrganizer;
+    private versionControl?: VersionedMemory;
+    private consolidation?: ConsolidationStrategy;
+    private _reasoningEngine?: ReasoningEngine;
 
     constructor(config: MemoryConfig & {
         enableGraph?: boolean;
@@ -29,6 +31,7 @@ export class AdvancedMemoryManager extends MemoryManager {
         enableHierarchy?: boolean;
         enableVersioning?: boolean;
         enableConsolidation?: boolean;
+        enableMemoryReasoning?: boolean;
     }) {
         super(config);
 
@@ -70,11 +73,20 @@ export class AdvancedMemoryManager extends MemoryManager {
                 similarityThreshold: 0.8
             });
         }
+
+        if ((config.enableMemoryReasoning ?? true) && config.llm) {
+            this._reasoningEngine = new ReasoningEngine(config.llm);
+        }
     }
 
     // Override remember with advanced features
     async remember(input: MemoryItemInput): Promise<MemoryItem> {
         const memory = await super.remember(input);
+
+        // Record initial version
+        if (this.versionControl) {
+            await this.versionControl.updateMemory(memory.id, memory.content, "initial");
+        }
 
         // Score importance
         if (this.importanceScorer) {
@@ -129,6 +141,25 @@ export class AdvancedMemoryManager extends MemoryManager {
             await this.workingMemory.activate(memory);
         }
 
+        // Feed episodic into dual system when applicable
+        if (this.dualSystem && memory.type === 'event') {
+            await this.dualSystem.addEpisode({
+                type: 'episodic',
+                when: memory.createdAt,
+                what: memory.content,
+                context: memory.metadata || {}
+            });
+        }
+
+        // Consolidate recent related memories if strategy suggests
+        if (this.consolidation) {
+            const all = await this.storage.getAll();
+            if (this.consolidation.shouldConsolidate(all)) {
+                const consolidated = await this.consolidation.consolidate(all);
+                await this.storage.save(consolidated);
+            }
+        }
+
         return memory;
     }
 
@@ -155,5 +186,10 @@ export class AdvancedMemoryManager extends MemoryManager {
         );
 
         return expanded;
+    }
+
+    // Reasoning engine accessor
+    get reasoningEngine(): ReasoningEngine | undefined {
+        return this._reasoningEngine;
     }
 }

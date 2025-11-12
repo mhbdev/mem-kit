@@ -14,11 +14,18 @@ export class ContradictionDetector {
         newMemory: MemoryItem,
         existing: MemoryItem[]
     ): Promise<MemoryItem[]> {
+        // Ensure embeddings exist for semantic checks
+        if (!newMemory.embedding && this.embedder) {
+            newMemory.embedding = await this.embedder.embed(newMemory.content);
+        }
         if (!newMemory.embedding) return [];
 
         const contradictions: MemoryItem[] = [];
 
         for (const mem of existing) {
+            if (!mem.embedding && this.embedder) {
+                mem.embedding = await this.embedder.embed(mem.content);
+            }
             if (!mem.embedding) continue;
 
             // Check semantic similarity

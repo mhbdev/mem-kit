@@ -1,20 +1,17 @@
-// Note: Requires 'better-sqlite3' package
+// Production SQLite storage using better-sqlite3
 import {IStorageAdapter} from "../../domain/ports/IStorageAdapter";
 import {MemoryItem} from "../../domain/models/MemoryItem";
+import Database from "better-sqlite3";
 
 export class SQLiteStorageAdapter implements IStorageAdapter {
-    private db: any;
+    private db: Database.Database;
 
     constructor(dbPath: string = ":memory:") {
-        // In production, import: const Database = require('better-sqlite3');
-        // this.db = new Database(dbPath);
-        this.db = null; // Placeholder for demo
+        this.db = new Database(dbPath);
         this.initDatabase();
     }
 
     private initDatabase(): void {
-        if (!this.db) return;
-
         this.db.exec(`
       CREATE TABLE IF NOT EXISTS memories (
         id TEXT PRIMARY KEY,
@@ -31,8 +28,6 @@ export class SQLiteStorageAdapter implements IStorageAdapter {
     }
 
     async save(item: MemoryItem): Promise<void> {
-        if (!this.db) throw new Error("SQLite not initialized");
-
         const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO memories 
       (id, type, content, embedding, metadata, createdAt, updatedAt, relevance, source)
@@ -53,34 +48,24 @@ export class SQLiteStorageAdapter implements IStorageAdapter {
     }
 
     async get(id: string): Promise<MemoryItem | null> {
-        if (!this.db) throw new Error("SQLite not initialized");
-
         const stmt = this.db.prepare("SELECT * FROM memories WHERE id = ?");
         const row = stmt.get(id);
-
         return row ? this.deserializeRow(row) : null;
     }
 
     async getAll(): Promise<MemoryItem[]> {
-        if (!this.db) throw new Error("SQLite not initialized");
-
         const stmt = this.db.prepare("SELECT * FROM memories ORDER BY createdAt DESC");
         const rows = stmt.all();
-
-        return rows.map(this.deserializeRow);
+        return rows.map((row: any) => this.deserializeRow(row));
     }
 
     async delete(id: string): Promise<boolean> {
-        if (!this.db) throw new Error("SQLite not initialized");
-
         const stmt = this.db.prepare("DELETE FROM memories WHERE id = ?");
         const result = stmt.run(id);
-
-        return result.changes > 0;
+        return (result as any).changes > 0;
     }
 
     async clear(): Promise<void> {
-        if (!this.db) throw new Error("SQLite not initialized");
         this.db.exec("DELETE FROM memories");
     }
 
@@ -99,8 +84,6 @@ export class SQLiteStorageAdapter implements IStorageAdapter {
     }
 
     close(): void {
-        if (this.db) {
-            this.db.close();
-        }
+        this.db.close();
     }
 }

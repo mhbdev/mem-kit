@@ -1,10 +1,8 @@
-import {
-    ILLMAdapter,
-    InMemoryStorageAdapter,
-    KeywordRetrievalStrategy,
-    MemoryManager,
-    MockEmbeddingAdapter
-} from "../src";
+import { ILLMAdapter } from "../src/domain/ports/ILLMAdapter";
+import { InMemoryStorageAdapter } from "../src/infra/storage/InMemoryStorageAdapter";
+import { KeywordRetrievalStrategy } from "../src/infra/retrieval/KeywordRetrievalStrategy";
+import { MemoryManager } from "../src/application/MemoryManager";
+import { MockEmbeddingAdapter } from "../src/infra/embedding/MockEmbeddingAdapter";
 
 describe('MemoryManager', () => {
     let memory: MemoryManager;

@@ -42,7 +42,7 @@ class CookingMemory {
             .flat()
             .filter(m => (m.metadata?.rating || 0) >= 4);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       User has these ingredients: ${ingredients.join(', ')}
       
       They previously enjoyed:

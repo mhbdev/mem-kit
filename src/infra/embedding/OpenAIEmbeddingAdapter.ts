@@ -34,7 +34,8 @@ export class OpenAIEmbeddingAdapter implements IEmbeddingAdapter {
             throw new Error(`OpenAI API error: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        type OpenAIEmbeddingResponse = { data: Array<{ embedding: number[] }> };
+        const data = (await response.json()) as OpenAIEmbeddingResponse;
         return data.data[0].embedding;
     }
 
@@ -55,7 +56,8 @@ export class OpenAIEmbeddingAdapter implements IEmbeddingAdapter {
             throw new Error(`OpenAI API error: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        return data.data.map((item: any) => item.embedding);
+        type OpenAIEmbeddingResponse = { data: Array<{ embedding: number[] }> };
+        const data = (await response.json()) as OpenAIEmbeddingResponse;
+        return data.data.map((item) => item.embedding);
     }
 }

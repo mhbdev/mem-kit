@@ -2,6 +2,7 @@
   "name": "mem-kit",
   "version": "0.1.0",
   "description": "Minimal, Pluggable LLM Memory SDK",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -11,6 +12,9 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.ts\"",
+    "build:tsc": "tsc -p tsconfig.json",
+    "bench:build": "tsup src/benchmarks/CostBenchmarks.ts --format cjs --out-dir dist/benchmarks --clean --no-dts",
+    "bench:cost": "npm run bench:build && node dist/benchmarks/CostBenchmarks.cjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

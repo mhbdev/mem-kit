@@ -36,7 +36,10 @@ export class OpenAIAdapter implements ILLMAdapter {
             throw new Error(`OpenAI API error: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        type OpenAIChatResponse = {
+            choices: Array<{ message: { content: string } }>;
+        };
+        const data = (await response.json()) as OpenAIChatResponse;
         return data.choices[0].message.content;
     }
 }

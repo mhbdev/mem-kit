@@ -1,4 +1,6 @@
-import {EmbeddingRetrievalStrategy, MemoryItem, MockEmbeddingAdapter} from "../src";
+import { EmbeddingRetrievalStrategy } from "../src/infra/retrieval/EmbeddingRetrievalStrategy";
+import { MockEmbeddingAdapter } from "../src/infra/embedding/MockEmbeddingAdapter";
+import { MemoryItem } from "../src/domain/models/MemoryItem";
 
 describe('EmbeddingRetrievalStrategy', () => {
     let strategy: EmbeddingRetrievalStrategy;
@@ -53,7 +55,7 @@ describe('EmbeddingRetrievalStrategy', () => {
         });
 
         it('should only consider items with embeddings', async () => {
-            const itemsWithoutEmbeddings = [
+            const itemsWithoutEmbeddings: MemoryItem[] = [
                 ...items,
                 {
                     id: '4',

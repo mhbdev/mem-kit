@@ -43,7 +43,7 @@ export class ProactiveMemorySystem {
 
     private async recallForTrigger(
         trigger: MemoryTrigger,
-        context: any
+        _context: any
     ): Promise<MemoryItem[]> {
         const allMemories = await this.storage.getAll();
 
@@ -57,7 +57,7 @@ export class ProactiveMemorySystem {
     }
 
     // Example: Location-based triggers
-    createLocationTrigger(location: string, radius: number = 1000): MemoryTrigger {
+    createLocationTrigger(location: string, _radius: number = 1000): MemoryTrigger {
         return {
             id: `loc_${location}`,
             pattern: location,
@@ -75,7 +75,7 @@ export class ProactiveMemorySystem {
         return {
             id: `time_${time}`,
             pattern: time,
-            condition: (context) => {
+            condition: (_context) => {
                 const now = new Date();
                 const hour = now.getHours();
                 const targetHour = parseInt(time.split(':')[0]);

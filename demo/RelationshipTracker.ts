@@ -2,7 +2,7 @@
 // Solution: Personal CRM that helps you be a better friend
 
 import {AdvancedMemoryManager} from "../src/infra/advanced/AdvancedMemoryManager";
-import {SQLiteStorageAdapter} from "../src";
+import {SQLiteStorageAdapter, OpenAIAdapter, OpenAIEmbeddingAdapter, MemoryItem} from "../src";
 
 class RelationshipMemory {
     private memory: AdvancedMemoryManager;
@@ -10,9 +10,9 @@ class RelationshipMemory {
     constructor() {
         this.memory = new AdvancedMemoryManager({
             storage: new SQLiteStorageAdapter('./relationships.db'),
-            enableProactiveRecall: true,
-            enableGraph: true,
-            enableImportanceScoring: true
+            embedder: new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            llm: new OpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            enableGraph: true
         });
     }
 
@@ -59,7 +59,7 @@ class RelationshipMemory {
         const preferences = await this.memory.recall(`${person} likes`, 10);
         const recentTalks = await this.memory.recall(person, 5);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       Suggest a gift for ${person} for ${occasion}.
       
       Their preferences: ${preferences.map(p => p.content).join(', ')}

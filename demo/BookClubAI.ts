@@ -2,7 +2,7 @@
 // Solution: AI that remembers every book you've read and discusses them
 
 import {AdvancedMemoryManager} from "../src/infra/advanced/AdvancedMemoryManager";
-import {SQLiteStorageAdapter} from "../src";
+import {OpenAIAdapter, OpenAIEmbeddingAdapter, SQLiteStorageAdapter} from "../src";
 
 class BookClubAI {
     private memory: AdvancedMemoryManager;
@@ -10,8 +10,9 @@ class BookClubAI {
     constructor() {
         this.memory = new AdvancedMemoryManager({
             storage: new SQLiteStorageAdapter('./books.db'),
+            embedder: new OpenAIEmbeddingAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
+            llm: new OpenAIAdapter({ apiKey: process.env.OPENAI_API_KEY! }),
             enableGraph: true,
-            enableMemoryReasoning: true,
             enableHierarchy: true
         });
     }
@@ -29,7 +30,7 @@ class BookClubAI {
         const relevantBooks = await this.memory.recallWithGraph(topic, 2);
 
         // Generate discussion using your reading history
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       The user wants to discuss: ${topic}
       
       Their reading history includes:
@@ -46,17 +47,14 @@ class BookClubAI {
     async findConnections(book1: string, book2: string) {
         const memories1 = await this.memory.recall(book1);
         const memories2 = await this.memory.recall(book2);
-
-        return this.memory.reasoningEngine.infer(
-            [...memories1, ...memories2],
-            'What themes and ideas connect these books?'
-        );
+        const combined = [...memories1, ...memories2].map(m => `- ${m.content}`).join('\n');
+        return this.memory.generate(`Analyze connections between these books:\n${combined}`);
     }
 
     async getReadingInsights() {
         const allBooks = await this.memory.recall('Book:', 1000);
 
-        return this.memory.llm.generate(`
+        return this.memory.generate(`
       Analyze this reading history:
       ${allBooks.map(b => b.content).join('\n')}
       

@@ -36,15 +36,13 @@ yarn add MemKit
 ```typescript
 import { 
   MemoryManager, 
-  InMemoryStorageAdapter, 
-  MockEmbeddingAdapter,
+  InMemoryStorageAdapter,
   KeywordRetrievalStrategy 
 } from "MemKit";
 
 // Initialize memory system
 const memory = new MemoryManager({
   storage: new InMemoryStorageAdapter(),
-  embedder: new MockEmbeddingAdapter(),
   retrieval: new KeywordRetrievalStrategy()
 });
 
@@ -97,7 +95,7 @@ MemKit follows clean architecture principles with clear layer separation:
 │                  Infrastructure Layer                        │
 │  Concrete Implementations (Adapters)                        │
 │  • Storage: InMemory, SQLite                                │
-│  • Embeddings: OpenAI, Mock                                 │
+│  • Embeddings: OpenAI                                       │
 │  • LLM: OpenAI                                              │
 │  • Retrieval: Keyword, Embedding                            │
 └─────────────────────────────────────────────────────────────┘
@@ -324,6 +322,8 @@ const memory = new MemoryManager({
 });
 ```
 
+Note: A lightweight `MockEmbeddingAdapter` exists for internal tests. It is not exported in the public API and should not be used in production.
+
 ### Memory Decay
 
 Enable time-based relevance decay:
@@ -531,6 +531,21 @@ Built with inspiration from:
 - 💬 [Discussions](https://github.com/yourusername/MemKit/discussions)
 
 ---
+
+## 📉 Benchmarks: Reducing LLM Memory Costs
+
+The `benchmarks/CostBenchmarks.ts` script estimates token and dollar savings when using MemKit’s retrieval to construct prompts versus a naive LLM approach that includes the entire memory log.
+
+- What it measures:
+  - Approximate tokens for a full-history prompt vs a retrieval-limited prompt.
+  - Estimated input cost using configurable per-token pricing.
+  - Savings in tokens, percent, and cost.
+
+- How to run:
+  - Build: `npx tsc -p tsconfig.json`
+  - Run: `node dist/benchmarks/CostBenchmarks.js`
+
+This benchmark uses `InMemoryStorageAdapter` and `KeywordRetrievalStrategy` for deterministic retrieval and does not call any external APIs.
 
 ## 🎯 Examples
 
